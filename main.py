@@ -17,51 +17,87 @@
 import webapp2
 import cgi
 
-def checkusername(username):
-    if username == None or username =="":
-        return error
-    #check if username box is left blank
-    #return error message if blank
-    return username
-
-def checkpasswords(password1, password2):
-    #check if both passwords are equal
-    #return error message if not equal
-    return password1==password2
-
-def checkemail(email):
-    #if anything written check for valid email
-    #blank is okay
-    return email
-
 class MainHandler(webapp2.RequestHandler):
     def get(self):
         error = self.request.get("error")
+
         if error:
             error_esc = cgi.escape(error, quote=True)
-            error_element = '<p class="error">' + error_esc + '</p>'
+            if error_esc == 'Please enter a username':
+                username_error = '<p class="error" style="color:red">' + error_esc + '</p>'
+                password_error = ''
+                email_error = ''
+            elif error_esc == 'Username cannot contain spaces':
+                username_error = '<p class="error" style="color:red">' + error_esc + '</p>'
+                password_error = ''
+                email_error = ''
+            elif error_esc == 'Please enter a password':
+                password_error = '<p class="error" style="color:red">' + error_esc + '</p>'
+                username_error = ''
+                email_error = ''
+            elif error_esc == 'Passwords do not match':
+                password_error = '<p class="error" style="color:red">' + error_esc + '</p>'
+                username_error = ''
+                email_error = ''
+            elif error_esc == 'Invalid Email':
+                email_error = '<p class="error" style="color:red">' + error_esc + '</p>'
+                username_error = ''
+                password_error = ''
         else:
-            error_element = ''
+            username_error = ''
+            password_error = ''
+            email_error= ''
 
         header = "<h1>Signup</h1>"
-        username = "Username: <form method = 'post'><input name=username></input></form>"
-        password = "Password: <form method = 'post'><input type=password name=password1></input></form>"
-        repassword ="Retype Password: <form method = 'post'><input type=password name=repassword></input></form>"
-        email = "Email (optional): <form method = 'post'><input type=email name=email></input></form>"
-        submitbutton = "<input type='submit' value='Submit' name='submit'/>"
-        self.response.write(header + username + error_element + password + repassword + email + submitbutton)
+        signupform = """
+            <form method='post'>
+                <table>
+                    <tr>
+                        <td><label>Username: </label></td>
+                        <td><input name='username'></input></td>
+                        <td><label>{}</label></td>
+                    <tr>
+                        <td><label>Password: </label></td>
+                        <td><input type='password' name='password'></input></td>
+                        <td><label>{}</label></td>
+                    <tr>
+                        <td><label>Retype Password: </label></td>
+                        <td><input type='password' name='repassword'></input></td>
+                        <td><label>{}</label></td>
+                    <tr>
+                        <td><label>Email (optional): </label></td>
+                        <td><input type='email' name='email' ></td>
+                        <td><label>{}</label></td>
+                    <tr>
+                        <td><input type='submit' value='Submit' name='submit'/></td>
+                </table>
+            </form>
+        """.format(username_error, password_error, password_error, email_error)
+        self.response.write(header + signupform)
 
     def post(self):
         username = self.request.get('username')
         password = self.request.get('password')
         repassword = self.request.get('repassword')
         email = self.request.get('email')
-        submitbutton = self.request.get('submit')
-        self.response.write(username +  password + repassword + email + submitbutton)
+
         if username =="":
             username_error = "Please enter a username"
-
             self.redirect("/?error=" + username_error)
+        elif " " in username:
+            username_error = "Username cannot contain spaces"
+            self.redirect("/?error=" + username_error)
+        elif password =="" or repassword == "":
+            password_error = "Please enter a password"
+            self.redirect("/?error=" + password_error)
+        elif password != repassword:
+            password_error = "Passwords do not match"
+            self.redirect("/?error=" + password_error)
+        elif email != "" and "@" not in email:
+            email_error = "Invalid Email"
+            self.redirect("/?error=" + email_error)
+        else:
+            self.response.write("Hello, " + username + ". Thanks for signing up!")
 
 
 
